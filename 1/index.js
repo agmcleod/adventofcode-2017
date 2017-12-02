@@ -1,5 +1,5 @@
 const fs = require('fs')
-fs.readFile('one/input.txt', (err, text) => {
+fs.readFile('1/input.txt', (err, text) => {
   const numbers = text.toString().split('')
 
   let sum = 0
