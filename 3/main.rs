@@ -31,6 +31,7 @@ fn main() {
                         min
                     };
                     let distance_from_middle = cmp::max(min + half, relative_position) - cmp::min(min + half, relative_position);
+                    println!("{} + {} = {}", distance_from_middle, spiral_count, distance_from_middle + spiral_count);
                     break
                 }
 
