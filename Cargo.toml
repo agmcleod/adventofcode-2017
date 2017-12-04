@@ -9,3 +9,7 @@ read_input = { path = "./read_input/" }
 [[bin]]
 name = "3"
 path = "3/main.rs"
+
+[[bin]]
+name = "4"
+path = "4/main.rs"
