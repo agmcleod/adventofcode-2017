@@ -4,7 +4,7 @@ use std::collections::{HashSet, HashMap};
 fn part_one(text: &String) {
     let mut all_programs: Vec<String> = Vec::new();
     let mut programs_supported: HashSet<String> = HashSet::new();
-    let mut programs_at_top: HashSet<String> = HashSet::new();
+    let mut programs_at_end_of_tower: HashSet<String> = HashSet::new();
     for line in text.lines() {
         let mut words_iter = line.split(" ");
         let pr;
@@ -26,12 +26,12 @@ fn part_one(text: &String) {
         }
 
         if count == 0 {
-            programs_at_top.insert(pr);
+            programs_at_end_of_tower.insert(pr);
         }
     }
 
     for program in all_programs {
-        if !programs_supported.contains(&program) && !programs_at_top.contains(&program) {
+        if !programs_supported.contains(&program) && !programs_at_end_of_tower.contains(&program) {
             println!("{}", program);
         }
     }
