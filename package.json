@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "1": "node 1/index.js"
+    "1": "node 1/index.js",
+    "9": "node 9/index.js"
   },
   "author": "",
   "license": "ISC",
