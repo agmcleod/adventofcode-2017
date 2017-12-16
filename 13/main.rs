@@ -6,6 +6,40 @@ struct Depth {
     list: Vec<usize>,
 }
 
+fn part_one_severity(layers: &HashMap<usize, Depth>, last_layer: usize) {
+    let mut severity = 0;
+    for n in 0..(last_layer+1) {
+        if let Some(depth) = layers.get(&n) {
+            if depth.list[n % depth.list.len()] == 0 {
+                severity += n * depth.depth;
+            }
+        }
+    }
+
+    println!("{}", severity);
+}
+
+fn part_two_picoseconds(layers: &HashMap<usize, Depth>, last_layer: usize) {
+    let mut picoseconds = 1;
+    loop {
+        let mut caught = false;
+        for n in 0..(last_layer+1) {
+            if let Some(depth) = layers.get(&n) {
+                if depth.list[(n + picoseconds) % depth.list.len()] == 0 {
+                    caught = true;
+                    break
+                }
+            }
+        }
+        if !caught {
+            break
+        }
+        picoseconds += 1;
+    }
+
+    println!("pico seconds: {}", picoseconds);
+}
+
 fn main() {
     let text = match read_input::read_text("13/input.txt") {
         Ok(t) => t,
@@ -34,14 +68,6 @@ fn main() {
         layers.insert(key, Depth{ depth: depth, list: list });
     }
 
-    let mut severity = 0;
-    for n in 0..(last_layer+1) {
-        if let Some(depth) = layers.get(&n) {
-            if depth.list[n % depth.list.len()] == 0 {
-                severity += n * depth.depth;
-            }
-        }
-    }
-
-    println!("{}", severity);
+    part_one_severity(&layers, last_layer);
+    part_two_picoseconds(&layers, last_layer);
 }
