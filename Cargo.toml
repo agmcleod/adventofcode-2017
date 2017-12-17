@@ -5,6 +5,8 @@ authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
 
 [dependencies]
 read_input = { path = "./read_input/" }
+knot_hash = { path = "./knot_hash/" }
+bytecount = "*"
 
 [[bin]]
 name = "3"
@@ -38,3 +40,6 @@ path = "11/main.rs"
 name = "13"
 path = "13/main.rs"
 
+[[bin]]
+name = "14"
+path = "14/main.rs"
