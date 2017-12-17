@@ -17,10 +17,10 @@ fn get_neighbours(coord: &(usize, usize)) -> Vec<(usize, usize)> {
     neighbours.push((coord.0 + 1, coord.1));
     neighbours.push((coord.0, coord.1 + 1));
 
-    if (coord.0 > 0) {
+    if coord.0 > 0 {
         neighbours.push((coord.0 - 1, coord.1));
     }
-    if (coord.1 > 0) {
+    if coord.1 > 0 {
         neighbours.push((coord.0, coord.1 - 1));
     }
 
