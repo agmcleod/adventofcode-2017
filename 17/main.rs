@@ -19,11 +19,18 @@ fn main() {
     }
     println!("{}", buffer[(position + 1) % buffer.len()]);
 
+    let mut zero_position = 0;
+    let mut after_zero = 0;
     let mut position = 0;
     let size = 50_000_000;
-    let mut buffer = get_buffer(size);
     for n in 1..size {
-        process_buffer(&mut buffer, &mut position, step, n);
+        position = (step + position) % n + 1;
+        if position == 0 {
+            zero_position += 1;
+        } else if position == zero_position + 1 {
+            after_zero = n;
+        }
     }
-    println!("{} or {}", buffer[1], buffer[buffer.iter().position(|n| *n == 0).unwrap()]);
+
+    println!("{}", after_zero);
 }
