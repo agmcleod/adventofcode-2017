@@ -1,7 +1,10 @@
 extern crate read_input;
 
 use std::collections::HashMap;
-use std::sync::mpsc;
+use std::thread;
+use std::sync::mpsc::channel;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::{Arc, Barrier};
 
 mod program;
 use program::get_register_or_value;
@@ -111,6 +114,80 @@ fn part_one(instructions: &Vec<Instruction>) {
     };
 
     loop {
+        let instruction = instructions.get(program.get_current_instruction() as usize).unwrap();
+        match *instruction {
+            Instruction::Set(ref register, ref value) => {
+                program.set(&register, &value);
+            },
+            Instruction::Add(ref register, ref value) => {
+                program.add(&register, &value);
+            },
+            Instruction::Mul(ref register, ref value) => {
+                program.mul(&register, &value);
+            },
+            Instruction::Mod(ref register, ref value) => {
+                program.modulous(&register, &value);
+            },
+            Instruction::Snd(ref register) => {
+                program.snd(&register);
+            },
+            Instruction::Rcv(ref register) => {
+                if program.rcv(&register, 0) {
+                    break
+                }
+            },
+            Instruction::Jump(ref condition, ref offset) => {
+                program.jump(&condition, &offset);
+            }
+        }
+
+        if program.get_current_instruction() < 0 || program.get_current_instruction() >= instructions.len() as i64 {
+            break
+        }
+    }
+}
+
+fn part_two(instructions: &Vec<Instruction>) {
+    let mut p2 = ProgramPartOne{
+        registers: HashMap::new(),
+        current_instruction: 0,
+        frequency: 0,
+    };
+
+    let mut handles = Vec::with_capacity(2);
+    let barrier = Arc::new(Barrier::new(2));
+
+    let (sender, receiver) = channel::<String>();
+    let (sender2, receiver2) = channel::<String>();
+    let c = barrier.clone();
+    handles.push(thread::spawn(move|| {
+        let mut p1 = ProgramPartOne{
+            registers: HashMap::new(),
+            current_instruction: 0,
+            frequency: 0,
+        };
+        start_loop(&instructions, &mut p1, sender2, receiver);
+        c.wait();
+    }));
+
+    let c = barrier.clone();
+    handles.push(thread::spawn(move|| {
+        let mut p2 = ProgramPartOne{
+            registers: HashMap::new(),
+            current_instruction: 0,
+            frequency: 0,
+        };
+        start_loop(&instructions, &mut p2, sender, receiver2);
+        c.wait();
+    }));
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+
+fn start_loop(instructions: &Vec<Instruction>, program: &mut Program, sender: Sender<String>, receiver: Receiver<String>) {
+     loop {
         let instruction = instructions.get(program.get_current_instruction() as usize).unwrap();
         match *instruction {
             Instruction::Set(ref register, ref value) => {
