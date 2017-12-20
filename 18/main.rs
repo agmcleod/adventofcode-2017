@@ -5,6 +5,7 @@ use std::thread;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{Arc, Barrier};
+use std::time::Duration;
 
 mod program;
 use program::get_register_or_value;
@@ -74,7 +75,6 @@ impl Program for ProgramPartOne {
 struct ProgramPartTwo {
     registers: HashMap<String, i64>,
     current_instruction: i64,
-    waiting: bool,
 }
 
 impl Program for ProgramPartTwo {
@@ -91,6 +91,7 @@ impl Program for ProgramPartTwo {
         self.current_instruction = program::modulous(&mut self.registers, register, value, self.current_instruction);
     }
     fn snd(&mut self, register: &String) -> Option<i64> {
+        self.current_instruction += 1;
         Some(get_register_or_value(&self.registers, register))
     }
     fn rcv(&mut self, register: &String, value: i64) -> bool {
@@ -147,37 +148,33 @@ fn part_one(instructions: &Vec<Instruction>) {
     }
 }
 
-fn part_two(instructions: &Vec<Instruction>) {
-    let mut p2 = ProgramPartOne{
-        registers: HashMap::new(),
-        current_instruction: 0,
-        frequency: 0,
-    };
-
+fn part_two(instructions: Arc<Vec<Instruction>>) {
     let mut handles = Vec::with_capacity(2);
     let barrier = Arc::new(Barrier::new(2));
 
-    let (sender, receiver) = channel::<String>();
-    let (sender2, receiver2) = channel::<String>();
+    let (sender, receiver) = channel::<i64>();
+    let (sender2, receiver2) = channel::<i64>();
     let c = barrier.clone();
+    let p0_instructions = instructions.clone();
     handles.push(thread::spawn(move|| {
-        let mut p1 = ProgramPartOne{
+        let mut p0 = ProgramPartTwo{
             registers: HashMap::new(),
             current_instruction: 0,
-            frequency: 0,
         };
-        start_loop(&instructions, &mut p1, sender2, receiver);
+        p0.registers.insert("p".to_string(), 0);
+        start_loop(p0_instructions, &mut p0, "Program 0", sender2, receiver);
         c.wait();
     }));
 
     let c = barrier.clone();
+    let p1_instructions = instructions.clone();
     handles.push(thread::spawn(move|| {
-        let mut p2 = ProgramPartOne{
+        let mut p1 = ProgramPartTwo{
             registers: HashMap::new(),
             current_instruction: 0,
-            frequency: 0,
         };
-        start_loop(&instructions, &mut p2, sender, receiver2);
+        p1.registers.insert("p".to_string(), 1);
+        start_loop(p1_instructions, &mut p1, "Program 1", sender, receiver2);
         c.wait();
     }));
 
@@ -186,8 +183,9 @@ fn part_two(instructions: &Vec<Instruction>) {
     }
 }
 
-fn start_loop(instructions: &Vec<Instruction>, program: &mut Program, sender: Sender<String>, receiver: Receiver<String>) {
-     loop {
+fn start_loop(instructions: Arc<Vec<Instruction>>, program: &mut Program, name: &str, sender: Sender<i64>, receiver: Receiver<i64>) {
+    let mut send_count = 0;
+    loop {
         let instruction = instructions.get(program.get_current_instruction() as usize).unwrap();
         match *instruction {
             Instruction::Set(ref register, ref value) => {
@@ -203,12 +201,21 @@ fn start_loop(instructions: &Vec<Instruction>, program: &mut Program, sender: Se
                 program.modulous(&register, &value);
             },
             Instruction::Snd(ref register) => {
-                program.snd(&register);
+                if let Some(value) = program.snd(&register) {
+                    sender.send(value).unwrap();
+                    send_count += 1;
+                }
             },
             Instruction::Rcv(ref register) => {
-                if program.rcv(&register, 0) {
-                    break
-                }
+                match receiver.recv_timeout(Duration::new(5, 0)) {
+                    Ok(value) => {
+                        program.rcv(&register, value)
+                    },
+                    Err(_) => {
+                        println!("Timed out with: {}", name);
+                        break
+                    },
+                };
             },
             Instruction::Jump(ref condition, ref offset) => {
                 program.jump(&condition, &offset);
@@ -219,6 +226,8 @@ fn start_loop(instructions: &Vec<Instruction>, program: &mut Program, sender: Se
             break
         }
     }
+
+    println!("{} send count: {}", name, send_count);
 }
 
 fn main() {
@@ -259,4 +268,5 @@ fn main() {
     }
 
     part_one(&instructions);
+    part_two(Arc::new(instructions));
 }
