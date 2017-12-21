@@ -7,6 +7,7 @@ authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
 read_input = { path = "./read_input/" }
 knot_hash = { path = "./knot_hash/" }
 bytecount = "*"
+regex = "*"
 
 [[bin]]
 name = "3"
@@ -63,3 +64,7 @@ path = "18/main.rs"
 [[bin]]
 name = "19"
 path = "19/main.rs"
+
+[[bin]]
+name = "20"
+path = "20/main.rs"
