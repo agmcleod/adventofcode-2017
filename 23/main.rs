@@ -5,6 +5,8 @@ use std::collections::HashMap;
 mod program;
 use program::get_register_or_value;
 
+type Registers = HashMap<String, i64>;
+
 #[derive(Debug, PartialEq)]
 enum Instruction {
     Set(String, String),
@@ -13,7 +15,7 @@ enum Instruction {
     Jump(String, String),
 }
 
-trait Program {
+trait ProgramBehaviour {
     fn set(&mut self, register: &String, value: &String);
     fn sub(&mut self, register: &String, value: &String);
     fn mul(&mut self, register: &String, value: &String);
@@ -21,12 +23,12 @@ trait Program {
     fn get_current_instruction(&self) -> i64;
 }
 
-struct ProgramPartOne {
-    registers: HashMap<String, i64>,
+struct Program {
+    registers: Registers,
     current_instruction: i64,
 }
 
-impl Program for ProgramPartOne {
+impl ProgramBehaviour for Program {
     fn set(&mut self, register: &String, value: &String) {
         self.current_instruction = program::set(&mut self.registers, register, value, self.current_instruction);
     }
@@ -45,7 +47,7 @@ impl Program for ProgramPartOne {
 }
 
 fn process(instructions: &Vec<Instruction>, part_two: bool) {
-    let mut program = ProgramPartOne{
+    let mut program = Program{
         registers: HashMap::new(),
         current_instruction: 0,
     };
@@ -56,6 +58,7 @@ fn process(instructions: &Vec<Instruction>, part_two: bool) {
 
     let mut multiply_counts = 0;
     let mut h_register = 0i64;
+    let mut negative_jumps: HashMap<usize, Registers> = HashMap::new();
 
     loop {
         let instruction = instructions.get(program.get_current_instruction() as usize).unwrap();
@@ -86,8 +89,8 @@ fn process(instructions: &Vec<Instruction>, part_two: bool) {
         }
     }
 
-    println!("{}", multiply_counts);
-    println!("{:?}", program.registers.get(&"h".to_string()));
+    println!("multiply counts: {}", multiply_counts);
+    println!("value in h: {:?}", program.registers.get(&"h".to_string()));
 }
 
 fn main() {
@@ -119,5 +122,5 @@ fn main() {
     }
 
     process(&instructions, false);
-    process(&instructions, true);
+    // process(&instructions, true);
 }
