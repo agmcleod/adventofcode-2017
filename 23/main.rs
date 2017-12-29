@@ -36,7 +36,6 @@ fn run_program(a: i64) {
             d -= -1;
             g = d;
             g -= b;
-            println!("mod loop: {}", g );
             if g == 0 {
                 break
             }
@@ -48,7 +47,6 @@ fn run_program(a: i64) {
 
         g = b;
         g -= c;
-        // println!("top level: {}", g);
         if g == 0 {
             break
         }
