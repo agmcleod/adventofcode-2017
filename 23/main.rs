@@ -9,30 +9,24 @@ fn run_program(a: i64) {
         b -= -100000;
         c = b;
         c -= -17000;
-        f = 1;
     }
 
     let mut g: i64 = 0;
     let mut h: i64 = 0;
     loop {
         let mut d: i64 = 2;
+        if a != 0 {
+            f = 1;
+        }
         loop {
             let mut e: i64 = 2;
-            loop {
-                g = d;
-                g *= e;
-                multiply_counts += 1;
-                g -= b;
-                if g == 0 {
-                    f = 0;
-                }
-                e -= -1;
-                g = e;
-                g -= b;
-                if g == 0 {
-                    break
-                }
+            let loop_counts = (e - b).abs();
+            multiply_counts += loop_counts;
+
+            if b % d == 0 {
+                f = 0;
             }
+
             d -= -1;
             g = d;
             g -= b;
@@ -42,7 +36,7 @@ fn run_program(a: i64) {
         }
 
         if f == 0 {
-            h -= 1;
+            h -= -1;
         }
 
         g = b;
@@ -58,6 +52,6 @@ fn run_program(a: i64) {
 }
 
 fn main() {
-    run_program(0);
+    // run_program(0);
     run_program(1);
 }
