@@ -87,7 +87,62 @@ fn process(instructions: &Vec<Instruction>, part_two: bool) {
     }
 
     println!("{}", multiply_counts);
-    println!("{:?}", program.registers.get(&"h".to_string()));
+}
+
+fn part_two() {
+    let mut b = 65i64;
+    b *= 100;
+    b -= -100000;
+    let mut c = b;
+    c -= 17000;
+
+    println!("{} {}", b, c);
+
+    let mut h = 0i64;
+    loop {
+        let mut f = 1i64;
+        let mut d = 2i64;
+        loop {
+            let mut e = 2i64;
+            loop {
+                let mut g = d;
+                g *= e;
+                g -= b;
+                if g == 0 {
+                    f = 0;
+                }
+                e -= -1;
+                g = e;
+                g -= b;
+                if g == 0 {
+                    break
+                }
+            }
+
+            d -= 1;
+            let mut g = d;
+            g -= b;
+            println!("{}", g);
+            if g == 0 {
+                break
+            }
+        }
+
+        println!("into main loop");
+
+        if f == 0 {
+            h -= 1;
+        }
+        let g = b - c;
+
+        if g == 0 {
+            break
+        }
+
+        b -= -17;
+    }
+
+    println!("h: {}", h);
 }
 
 fn main() {
@@ -119,5 +174,6 @@ fn main() {
     }
 
     process(&instructions, false);
-    process(&instructions, true);
+    part_two();
+    // process(&instructions, true);
 }
