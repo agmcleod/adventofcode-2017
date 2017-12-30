@@ -126,7 +126,6 @@ fn main() {
     }
 
     let mut strength_total = 0;
-    let mut start_index = 0;
 
     loop {
         let mut bridge = vec![components.get(try_zero_index).unwrap().clone()];
@@ -137,7 +136,7 @@ fn main() {
             let mut found = false;
             let components_count = components.len();
             for i in 0..components_count {
-                let relative_index = (i + first_non_zero_component_index + start_index) % components_count;
+                let relative_index = (i + first_non_zero_component_index) % components_count;
                 if relative_index < first_non_zero_component_index {
                     continue
                 }
@@ -172,11 +171,7 @@ fn main() {
 
         try_zero_index += 1;
         if try_zero_index >= first_non_zero_component_index {
-            if start_index + try_zero_index == components.len() - 1 {
-                break
-            }
-            start_index += 1;
-            try_zero_index = 0;
+            break
         }
     }
 
