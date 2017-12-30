@@ -3,6 +3,7 @@ extern crate read_input;
 use std::cmp::Ordering;
 use std::cmp::max;
 use std::fmt;
+use std::collections::HashSet;
 
 #[derive(Copy, Clone)]
 struct Port {
@@ -25,14 +26,23 @@ impl PartialEq for Port {
     }
 }
 
-#[derive(Copy, Clone)]
 struct Component {
     left: Port,
     right: Port,
     strength: usize,
+    id: String,
 }
 
 impl Component {
+    fn new(left: Port, right: Port, strength: usize) -> Component {
+        Component{
+            left,
+            right,
+            strength,
+            id: format!("{}/{}", left.pins, right.pins),
+        }
+    }
+
     fn can_match(&mut self, other: &mut Component) -> bool {
         if self.left == other.left {
             self.left.used = true;
@@ -62,7 +72,18 @@ impl Component {
 
 impl fmt::Debug for Component {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}", self.left.pins, self.right.pins)
+        write!(f, "{}/{} ({})", self.left.pins, self.right.pins, self.strength)
+    }
+}
+
+impl Clone for Component {
+    fn clone(&self) -> Component {
+        Component{
+            left: self.left,
+            right: self.right,
+            strength: self.strength,
+            id: self.id.clone(),
+        }
     }
 }
 
@@ -78,7 +99,7 @@ fn main() {
         let mut iter = line.split("/");
         let left: usize = iter.next().unwrap().parse().unwrap();
         let right: usize = iter.next().unwrap().parse().unwrap();
-        components.push(Component{ left: Port::new(left), right: Port::new(right), strength: left + right });
+        components.push(Component::new(Port::new(left), Port::new(right), left + right));
     }
 
     components.sort_by(|a, b| {
@@ -105,34 +126,48 @@ fn main() {
     }
 
     let mut strength_total = 0;
-    let mut start_index = max_zero_component_index;
+    let mut start_index = 0;
 
     loop {
         let mut bridge = vec![components.get(try_zero_index).unwrap().clone()];
 
-        let mut iter = components.iter().skip(start_index);
+        let mut used_set = HashSet::new();
+        loop {
+            let mut iter = components.iter().skip(max_zero_component_index + start_index);
+            let mut found = false;
+            while let Some(component) = iter.next() {
+                if used_set.contains(&component.id) {
+                    continue
+                }
+                used_set.insert(component.id.clone());
+                let len = bridge.len();
+                let mut component_clone = component.clone();
+                let did_match = {
+                    let last = bridge.get_mut(len - 1).unwrap();
+                    last.can_match(&mut component_clone)
+                };
 
-        while let Some(component) = iter.next() {
-            let len = bridge.len();
-            let mut component_clone = component.clone();
-            let did_match = {
-                let last = bridge.get_mut(len - 1).unwrap();
-                last.can_match(&mut component_clone)
-            };
+                if did_match {
+                    bridge.push(component_clone);
+                    found = true;
+                }
+            }
 
-            if did_match {
-                bridge.push(component_clone);
+            if !found {
+                break
             }
         }
+
 
         strength_total = max(strength_total, bridge.iter().fold(0, |sum, component| sum + component.strength));
 
         try_zero_index += 1;
         if try_zero_index >= max_zero_component_index {
-            start_index += 1;
-            if start_index == components.len() - 1 {
+            if start_index + try_zero_index == components.len() - 1 {
                 break
             }
+            start_index += 1;
+            try_zero_index = 0;
         }
     }
 
