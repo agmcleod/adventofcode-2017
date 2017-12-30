@@ -1,6 +1,5 @@
 extern crate read_input;
 
-use std::cmp::Ordering;
 use std::cmp::max;
 use std::fmt;
 use std::collections::HashSet;
@@ -15,7 +14,7 @@ impl Port {
     fn new(pins: usize) -> Port {
         Port{
             pins,
-            used: false,
+            used: pins == 0,
         }
     }
 }
@@ -87,93 +86,76 @@ impl Clone for Component {
     }
 }
 
+fn build_bridge(components: &Vec<Component>, zero_components: &Vec<Component>, current_component: &mut Component, used_components: HashSet<String>, layer: usize) -> Vec<usize> {
+    let mut found = false;
+    let mut lengths = Vec::new();
+    for component in components {
+        if used_components.contains(&component.id) {
+            continue
+        }
+
+        let mut copy = component.clone();
+        let mut current_clone = current_component.clone();
+        if current_clone.can_match(&mut copy) {
+            let mut used_components = used_components.clone();
+            used_components.insert(copy.id.clone());
+            found = true;
+            lengths.append(&mut build_bridge(components, zero_components, &mut copy, used_components, layer + 1));
+        }
+    }
+
+    if !found {
+        let mut sum = zero_components.iter().filter(|component| {
+            used_components.contains(&component.id)
+        }).fold(0, |sum, component| sum + component.strength);
+
+        sum += components.iter().filter(|component| {
+            used_components.contains(&component.id)
+        }).fold(0, |sum, component| sum + component.strength);
+
+        lengths.push(sum);
+    }
+
+    lengths
+}
+
 fn main() {
     let text = match read_input::read_text("24/input.txt") {
         Ok(t) => t,
         Err(e) => panic!("{:?}", e),
     };
 
-    let mut components = Vec::new();
+    let mut zero_components = Vec::new();
+    let mut non_zero_components = Vec::new();
 
     for line in text.lines() {
         let mut iter = line.split("/");
         let left: usize = iter.next().unwrap().parse().unwrap();
         let right: usize = iter.next().unwrap().parse().unwrap();
-        components.push(Component::new(Port::new(left), Port::new(right), left + right));
-    }
-
-    components.sort_by(|a, b| {
-        if a.is_zero() && b.is_zero() {
-            Ordering::Equal
-        } else if a.is_zero() && !b.is_zero() {
-            Ordering::Less
-        } else if !a.is_zero() && b.is_zero() {
-            Ordering::Greater
-        } else {
-            b.strength.cmp(&a.strength)
-        }
-    });
-
-    let mut try_zero_index = 0;
-    let mut first_non_zero_component_index = 0;
-
-    for component in &components {
+        let component = Component::new(Port::new(left), Port::new(right), left + right);
         if component.is_zero() {
-            first_non_zero_component_index += 1;
+            zero_components.push(component);
         } else {
-            break
+            non_zero_components.push(component);
         }
     }
 
-    let mut strength_total = 0;
+    let mut lengths = Vec::new();
+    for zero_component in &zero_components {
+        let mut used_components = HashSet::new();
+        used_components.insert(zero_component.id.clone());
 
-    loop {
-        let mut bridge = vec![components.get(try_zero_index).unwrap().clone()];
-
-        let mut used_set = HashSet::new();
-        used_set.insert(bridge[0].id.clone());
-        loop {
-            let mut found = false;
-            let components_count = components.len();
-            for i in 0..components_count {
-                let relative_index = (i + first_non_zero_component_index) % components_count;
-                if relative_index < first_non_zero_component_index {
-                    continue
-                }
-
-                let component = components.get(relative_index).unwrap();
-
-                if used_set.contains(&component.id) {
-                    continue
-                }
-
-                let len = bridge.len();
-                let mut component_clone = component.clone();
-                let did_match = {
-                    let last = bridge.get_mut(len - 1).unwrap();
-                    last.can_match(&mut component_clone)
-                };
-
-                if did_match {
-                    bridge.push(component_clone);
-
-                    used_set.insert(component.id.clone());
-                    found = true;
-                }
-            }
-
-            if !found {
-                break
-            }
-        }
-
-        strength_total = max(strength_total, bridge.iter().fold(0, |sum, component| sum + component.strength));
-
-        try_zero_index += 1;
-        if try_zero_index >= first_non_zero_component_index {
-            break
-        }
+        lengths.append(
+            &mut build_bridge(
+                &non_zero_components,
+                &zero_components,
+                &mut zero_component.clone(),
+                used_components,
+                1
+            )
+        );
     }
 
-    println!("strength: {}", strength_total);
+    lengths.sort();
+    println!("{}", lengths[lengths.len() - 1]);
 }
