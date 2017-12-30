@@ -115,11 +115,11 @@ fn main() {
     });
 
     let mut try_zero_index = 0;
-    let mut max_zero_component_index = 0;
+    let mut first_non_zero_component_index = 0;
 
     for component in &components {
         if component.is_zero() {
-            max_zero_component_index += 1;
+            first_non_zero_component_index += 1;
         } else {
             break
         }
@@ -132,14 +132,22 @@ fn main() {
         let mut bridge = vec![components.get(try_zero_index).unwrap().clone()];
 
         let mut used_set = HashSet::new();
+        used_set.insert(bridge[0].id.clone());
         loop {
-            let mut iter = components.iter().skip(max_zero_component_index + start_index);
             let mut found = false;
-            while let Some(component) = iter.next() {
+            let components_count = components.len();
+            for i in 0..components_count {
+                let relative_index = (i + first_non_zero_component_index + start_index) % components_count;
+                if relative_index < first_non_zero_component_index {
+                    continue
+                }
+
+                let component = components.get(relative_index).unwrap();
+
                 if used_set.contains(&component.id) {
                     continue
                 }
-                used_set.insert(component.id.clone());
+
                 let len = bridge.len();
                 let mut component_clone = component.clone();
                 let did_match = {
@@ -149,6 +157,8 @@ fn main() {
 
                 if did_match {
                     bridge.push(component_clone);
+
+                    used_set.insert(component.id.clone());
                     found = true;
                 }
             }
@@ -158,11 +168,10 @@ fn main() {
             }
         }
 
-
         strength_total = max(strength_total, bridge.iter().fold(0, |sum, component| sum + component.strength));
 
         try_zero_index += 1;
-        if try_zero_index >= max_zero_component_index {
+        if try_zero_index >= first_non_zero_component_index {
             if start_index + try_zero_index == components.len() - 1 {
                 break
             }
