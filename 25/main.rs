@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 enum State {
     A,
     B,
@@ -7,89 +9,81 @@ enum State {
     F,
 }
 
-fn process_turing_step(state: &mut State, tape: &mut Vec<usize>, position: &mut usize) {
-    let mut pos = *position as i64;
+fn cursor_is_zero(tape: &HashMap<i64, usize>, position: &i64) -> bool {
+    !tape.contains_key(position) || tape[position] == 0
+}
+
+fn process_turing_step(state: &mut State, tape: &mut HashMap<i64, usize>, position: &mut i64) {
     match *state {
         State::A => {
-            if tape[*position] == 0 {
-                tape[*position] = 1;
-                pos += 1;
+            if cursor_is_zero(tape, position) {
+                tape.insert(*position, 1);
+                *position += 1;
                 *state = State::B;
             } else {
-                tape[*position] = 0;
-                pos -= 1;
+                tape.insert(*position, 0);
+                *position -= 1;
                 *state = State::C;
             }
         },
         State::B => {
-            tape[*position] = 1;
-            pos -= 1;
-            if tape[*position] == 0 {
+            if cursor_is_zero(tape, position) {
+                tape.insert(*position, 1);
+                *position -= 1;
                 *state = State::A;
             } else {
+                tape.insert(*position, 1);
+                *position -= 1;
                 *state = State::D;
             }
         },
         State::C => {
-            if tape[*position] == 0 {
-                tape[*position] = 1;
-                pos += 1;
+            if cursor_is_zero(tape, position) {
+                tape.insert(*position, 1);
+                *position += 1;
                 *state = State::D;
             } else {
-                tape[*position] = 0;
-                pos += 1;
+                tape.insert(*position, 0);
+                *position += 1;
                 *state = State::C;
             }
         },
         State::D => {
-            if tape[*position] == 0 {
-                pos -= 1;
+            if cursor_is_zero(tape, position) {
+                *position -= 1;
                 *state = State::B;
             } else {
-                tape[*position] = 0;
-                pos += 1;
+                tape.insert(*position, 0);
+                *position += 1;
                 *state = State::E;
             }
         },
         State::E => {
-            if tape[*position] == 0 {
-                tape[*position] = 1;
-                pos += 1;
+            if cursor_is_zero(tape, position) {
+                tape.insert(*position, 1);
+                *position += 1;
                 *state = State::C;
             } else {
-                pos -= 1;
+                *position -= 1;
                 *state = State::F;
             }
         },
         State::F => {
-            if tape[*position] == 0 {
-                tape[*position] = 1;
-                pos -= 1;
+            if cursor_is_zero(tape, position) {
+                tape.insert(*position, 1);
+                *position -= 1;
                 *state = State::E;
             } else {
-                pos += 1;
+                *position += 1;
                 *state = State::A;
             }
         },
     }
-
-    pad_zeroes_for_out_of_bounds(tape, pos);
-}
-
-fn pad_zeroes_for_out_of_bounds(tape: &mut Vec<usize>, pos: i64) {
-    if pos < 0 {
-        for _ in 0..pos.abs() {
-            tape.insert(0, 0);
-        }
-    } else if pos as usize >= tape.len() {
-        for _ in 0..(pos.abs() as usize - (tape.len() - 1)) {
-            tape.push(0);
-        }
-    }
 }
 
 fn main() {
-    let mut tape = vec![0];
+    let mut tape = HashMap::new();
+    tape.insert(0i64, 0);
     let mut state = State::A;
     let mut position = 0;
 
@@ -97,7 +91,7 @@ fn main() {
         process_turing_step(&mut state, &mut tape, &mut position);
     }
 
-    println!("{}", tape.iter().fold(0, |sum, v| sum + v));
+    println!("{}", tape.iter().fold(0, |sum, v| sum + v.1));
 }
 
 #[cfg(test)]
