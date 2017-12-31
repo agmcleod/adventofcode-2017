@@ -14,7 +14,7 @@ impl Port {
     fn new(pins: usize) -> Port {
         Port{
             pins,
-            used: pins == 0,
+            used: false,
         }
     }
 }
@@ -86,9 +86,9 @@ impl Clone for Component {
     }
 }
 
-fn build_bridge(components: &Vec<Component>, zero_components: &Vec<Component>, current_component: &mut Component, used_components: HashSet<String>, layer: usize) -> Vec<usize> {
+fn build_bridge(components: &Vec<Component>, current_component: &mut Component, used_components: HashSet<String>, bridge: Vec<Component>) -> Vec<Vec<Component>> {
     let mut found = false;
-    let mut lengths = Vec::new();
+    let mut bridges = Vec::new();
     for component in components {
         if used_components.contains(&component.id) {
             continue
@@ -100,23 +100,17 @@ fn build_bridge(components: &Vec<Component>, zero_components: &Vec<Component>, c
             let mut used_components = used_components.clone();
             used_components.insert(copy.id.clone());
             found = true;
-            lengths.append(&mut build_bridge(components, zero_components, &mut copy, used_components, layer + 1));
+            let mut bridge = bridge.clone();
+            bridge.push(copy.clone());
+            bridges.append(&mut build_bridge(components, &mut copy, used_components, bridge));
         }
     }
 
     if !found {
-        let mut sum = zero_components.iter().filter(|component| {
-            used_components.contains(&component.id)
-        }).fold(0, |sum, component| sum + component.strength);
-
-        sum += components.iter().filter(|component| {
-            used_components.contains(&component.id)
-        }).fold(0, |sum, component| sum + component.strength);
-
-        lengths.push(sum);
+        bridges.push(bridge);
     }
 
-    lengths
+    bridges
 }
 
 fn main() {
@@ -126,7 +120,7 @@ fn main() {
     };
 
     let mut zero_components = Vec::new();
-    let mut non_zero_components = Vec::new();
+    let mut all_components = Vec::new();
 
     for line in text.lines() {
         let mut iter = line.split("/");
@@ -134,28 +128,46 @@ fn main() {
         let right: usize = iter.next().unwrap().parse().unwrap();
         let component = Component::new(Port::new(left), Port::new(right), left + right);
         if component.is_zero() {
-            zero_components.push(component);
-        } else {
-            non_zero_components.push(component);
+            zero_components.push(component.clone());
         }
+        all_components.push(component);
     }
 
-    let mut lengths = Vec::new();
+    let mut bridges = Vec::new();
     for zero_component in &zero_components {
         let mut used_components = HashSet::new();
         used_components.insert(zero_component.id.clone());
 
-        lengths.append(
+        let mut zero_component = zero_component.clone();
+        // we know that the left port is the zero, so set it to used
+        zero_component.left.used = true;
+        let bridge = vec![zero_component.clone()];
+
+        bridges.append(
             &mut build_bridge(
-                &non_zero_components,
-                &zero_components,
-                &mut zero_component.clone(),
+                &all_components,
+                &mut zero_component,
                 used_components,
-                1
+                bridge,
             )
         );
     }
 
-    lengths.sort();
-    println!("{}", lengths[lengths.len() - 1]);
+    let mut strongest_bridge = 0;
+    let mut longest_bridge_length = 0;
+    for bridge in &bridges {
+        strongest_bridge = max(strongest_bridge, bridge.iter().fold(0, |sum, component| sum + component.strength));
+        longest_bridge_length = max(longest_bridge_length, bridge.len());
+    }
+
+    let mut strongest_longest_bridge = 0;
+
+    for bridge in &bridges {
+        if bridge.len() == longest_bridge_length {
+            strongest_longest_bridge = max(strongest_longest_bridge, bridge.iter().fold(0, |sum, component| sum + component.strength));
+        }
+    }
+
+    println!("{}", strongest_bridge);
+    println!("{}", strongest_longest_bridge);
 }
