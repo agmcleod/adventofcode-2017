@@ -93,29 +93,3 @@ fn main() {
 
     println!("{}", tape.iter().fold(0, |sum, v| sum + v.1));
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_adding_zeroes_index_in_middle() {
-        let mut tape = vec![0, 0, 0];
-        pad_zeroes_for_out_of_bounds(&mut tape, 1);
-        assert_eq!(tape.len(), 3);
-    }
-
-    #[test]
-    fn test_adding_zeroes_index_before_front() {
-        let mut tape = vec![0, 0, 0];
-        pad_zeroes_for_out_of_bounds(&mut tape, -1);
-        assert_eq!(tape.len(), 4);
-    }
-
-    #[test]
-    fn test_adding_zeroes_index_after_end() {
-        let mut tape = vec![0, 0, 0];
-        pad_zeroes_for_out_of_bounds(&mut tape, 3);
-        assert_eq!(tape.len(), 4);
-    }
-}
